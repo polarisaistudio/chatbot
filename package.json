@@ -13,6 +13,7 @@
     "db:setup": "node scripts/setup-db.js",
     "db:test": "node scripts/test-db.js",
     "test:groq": "node scripts/test-groq.js",
+    "test:processing": "node scripts/test-processing.js",
     "type-check": "tsc --noEmit",
     "format": "prettier --write ."
   },
