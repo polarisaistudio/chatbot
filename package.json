@@ -14,6 +14,8 @@
     "db:test": "node scripts/test-db.js",
     "test:groq": "node scripts/test-groq.js",
     "test:processing": "node scripts/test-processing.js",
+    "test:e2e": "node scripts/test-e2e.js",
+    "debug:vector": "node scripts/debug-vector-search.js",
     "type-check": "tsc --noEmit",
     "format": "prettier --write ."
   },

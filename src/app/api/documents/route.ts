@@ -27,6 +27,10 @@ export async function GET(request: NextRequest) {
 
     const validation = listDocumentsSchema.safeParse(params);
     if (!validation.success) {
+      logger.error('List documents validation failed', new Error('Validation error'), {
+        context: 'DocumentsAPI',
+        metadata: { params, errors: validation.error.errors },
+      });
       return NextResponse.json(
         { error: validation.error.errors[0].message },
         { status: 400 }

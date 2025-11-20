@@ -14,8 +14,17 @@ export class TextParser {
       let content: string;
 
       if (typeof input === 'string') {
+        // If input is a data URL, decode it
+        if (input.startsWith('data:')) {
+          logger.debug('Decoding data URL', { context: 'TextParser' });
+          const base64Data = input.split(',')[1];
+          if (!base64Data) {
+            throw new Error('Invalid data URL format');
+          }
+          content = Buffer.from(base64Data, 'base64').toString('utf-8');
+        }
         // If input is a URL, fetch it
-        if (input.startsWith('http://') || input.startsWith('https://')) {
+        else if (input.startsWith('http://') || input.startsWith('https://')) {
           logger.debug('Fetching text file from URL', { context: 'TextParser' });
           const response = await fetch(input);
           if (!response.ok) {

@@ -15,8 +15,17 @@ export class PDFParser {
       let buffer: Buffer;
 
       if (typeof input === 'string') {
+        // If input is a data URL, decode it
+        if (input.startsWith('data:')) {
+          logger.debug('Decoding data URL', { context: 'PDFParser' });
+          const base64Data = input.split(',')[1];
+          if (!base64Data) {
+            throw new Error('Invalid data URL format');
+          }
+          buffer = Buffer.from(base64Data, 'base64');
+        }
         // If input is a URL, fetch it
-        if (input.startsWith('http://') || input.startsWith('https://')) {
+        else if (input.startsWith('http://') || input.startsWith('https://')) {
           logger.debug('Fetching PDF file from URL', { context: 'PDFParser' });
           const response = await fetch(input);
           if (!response.ok) {

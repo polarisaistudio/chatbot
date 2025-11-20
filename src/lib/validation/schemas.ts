@@ -41,7 +41,7 @@ export type DocumentUpload = z.infer<typeof documentUploadSchema>;
 export const listDocumentsSchema = z.object({
   limit: z.coerce.number().min(1).max(100).optional().default(50),
   offset: z.coerce.number().min(0).optional().default(0),
-  status: z.enum(['processing', 'completed', 'failed', 'all']).optional().default('all'),
+  status: z.enum(['processing', 'completed', 'failed', 'all']).nullable().optional().default('all'),
 });
 
 export type ListDocumentsQuery = z.infer<typeof listDocumentsSchema>;
