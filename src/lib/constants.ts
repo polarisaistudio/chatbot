@@ -16,7 +16,7 @@ export const TOP_K_CHUNKS = 5; // Number of chunks to retrieve
 export const MIN_SIMILARITY_SCORE = 0.5;
 
 // LLM configuration
-export const GROQ_MODEL = 'llama3-70b-8192';
+export const GROQ_MODEL = 'llama-3.3-70b-versatile';
 export const MAX_TOKENS = 1024;
 export const TEMPERATURE = 0.7;
 

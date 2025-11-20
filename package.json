@@ -12,6 +12,7 @@
     "db:studio": "drizzle-kit studio",
     "db:setup": "node scripts/setup-db.js",
     "db:test": "node scripts/test-db.js",
+    "test:groq": "node scripts/test-groq.js",
     "type-check": "tsc --noEmit",
     "format": "prettier --write ."
   },
