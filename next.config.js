@@ -1,15 +1,28 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   experimental: {
-    serverComponentsExternalPackages: ['pdf-parse'],
+    serverComponentsExternalPackages: ['pdf-parse', '@xenova/transformers'],
   },
-  webpack: (config) => {
-    // For @xenova/transformers
+  webpack: (config, { isServer }) => {
+    // For @xenova/transformers and other Node.js-only modules
     config.resolve.alias = {
       ...config.resolve.alias,
       'sharp$': false,
       'onnxruntime-node$': false,
     };
+
+    // Ignore Node.js modules in client bundles
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+        path: false,
+        crypto: false,
+        stream: false,
+        buffer: false,
+      };
+    }
+
     return config;
   },
   async headers() {
