@@ -13,7 +13,7 @@ export const chatRequestSchema = z.object({
     .string()
     .min(1, 'Message is required')
     .max(MAX_MESSAGE_LENGTH, `Message must be less than ${MAX_MESSAGE_LENGTH} characters`),
-  sessionId: z.string().optional(),
+  sessionId: z.string().nullable().optional(),
   topK: z.number().min(1).max(10).optional().default(5),
 });
 
