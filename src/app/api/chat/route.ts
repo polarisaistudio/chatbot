@@ -10,6 +10,7 @@ import { chatRequestSchema } from '@/lib/validation';
 import { handleError, ValidationError } from '@/lib/utils/errors';
 import { generateSessionId } from '@/lib/utils/helpers';
 import { logger } from '@/lib/utils/logger';
+import { getConversationHistory } from '@/lib/utils/conversation';
 import { eq } from 'drizzle-orm';
 
 export const runtime = 'nodejs';
@@ -71,6 +72,9 @@ export async function POST(request: NextRequest) {
       content: userMessage,
     });
 
+    // Get conversation history (excluding the current message)
+    const conversationHistory = await getConversationHistory(conversation.id);
+
     // Check if streaming is requested
     const acceptHeader = request.headers.get('accept');
     const wantsStream = acceptHeader?.includes('text/event-stream');
@@ -85,7 +89,11 @@ export async function POST(request: NextRequest) {
             let sources: any[] = [];
             let metadata: any = {};
 
-            for await (const chunk of ragQueryEngine.queryStream(userMessage, topK)) {
+            for await (const chunk of ragQueryEngine.queryStream(
+              userMessage,
+              topK,
+              conversationHistory
+            )) {
               if (chunk.type === 'metadata') {
                 sources = chunk.data.sources;
                 metadata = chunk.data;
@@ -158,7 +166,7 @@ export async function POST(request: NextRequest) {
     } else {
       // Return non-streaming response
       const startTime = Date.now();
-      const result = await ragQueryEngine.query(userMessage, topK);
+      const result = await ragQueryEngine.query(userMessage, topK, conversationHistory);
       const responseTime = Date.now() - startTime;
 
       // Store assistant message

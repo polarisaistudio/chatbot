@@ -9,6 +9,7 @@ import {
   buildChatMessages,
   detectLanguage,
   getFallbackResponse,
+  type ConversationMessage,
 } from '@/lib/prompts/templates';
 import { logger } from '@/lib/utils/logger';
 import type { SearchResult } from './vector-search';
@@ -30,7 +31,11 @@ export class RAGQueryEngine {
   /**
    * Query the RAG system with a user question
    */
-  async query(question: string, topK: number = 5): Promise<QueryResult> {
+  async query(
+    question: string,
+    topK: number = 5,
+    conversationHistory?: ConversationMessage[]
+  ): Promise<QueryResult> {
     const startTime = Date.now();
     logger.info('Starting RAG query', {
       context: 'RAGQueryEngine',
@@ -86,11 +91,12 @@ export class RAGQueryEngine {
           context: 'RAGQueryEngine',
         });
       } else {
-        // Build prompt with context
+        // Build prompt with context and conversation history
         const messages = buildChatMessages({
           chunks: searchResults,
           question,
           language,
+          conversationHistory,
         });
 
         // Generate answer
@@ -137,7 +143,8 @@ export class RAGQueryEngine {
    */
   async *queryStream(
     question: string,
-    topK: number = 5
+    topK: number = 5,
+    conversationHistory?: ConversationMessage[]
   ): AsyncGenerator<
     { type: 'chunk'; content: string } | { type: 'metadata'; data: any },
     void,
@@ -181,6 +188,7 @@ export class RAGQueryEngine {
           chunks: searchResults,
           question,
           language,
+          conversationHistory,
         });
 
         const llmStart = Date.now();

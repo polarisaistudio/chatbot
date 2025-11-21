@@ -4,10 +4,16 @@
 
 import type { SearchResult } from '@/lib/rag/vector-search';
 
+export interface ConversationMessage {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
 export interface PromptContext {
   chunks: SearchResult[];
   question: string;
   language?: 'en' | 'zh';
+  conversationHistory?: ConversationMessage[];
 }
 
 /**
@@ -38,6 +44,8 @@ Guidelines:
 - Maintain a professional and friendly tone
 - If the user asks in Chinese, respond in Chinese. If in English, respond in English.
 - Always cite which document the information comes from when possible
+- Consider the conversation history to provide contextual and relevant responses
+- If the user refers to previous messages (e.g., "what did you just say", "tell me more about that"), use the conversation history to understand the context
 
 Remember: You are representing the company's customer support, so be helpful, accurate, and professional.`;
 
@@ -59,19 +67,34 @@ Please provide a helpful answer based on the context above. If the context doesn
 }
 
 /**
- * Build messages for chat completion
+ * Build messages for chat completion with conversation history
  */
 export function buildChatMessages(context: PromptContext) {
-  return [
+  const messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = [
     {
       role: 'system' as const,
       content: SYSTEM_PROMPT,
     },
-    {
-      role: 'user' as const,
-      content: buildUserPrompt(context),
-    },
   ];
+
+  // Add conversation history (limit to last 10 messages to avoid context overflow)
+  if (context.conversationHistory && context.conversationHistory.length > 0) {
+    const recentHistory = context.conversationHistory.slice(-10);
+    recentHistory.forEach((msg) => {
+      messages.push({
+        role: msg.role,
+        content: msg.content,
+      });
+    });
+  }
+
+  // Add current query with context
+  messages.push({
+    role: 'user' as const,
+    content: buildUserPrompt(context),
+  });
+
+  return messages;
 }
 
 /**

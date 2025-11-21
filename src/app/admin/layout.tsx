@@ -4,8 +4,16 @@
 
 import Link from 'next/link';
 import { FileText, MessageSquare, BarChart3 } from 'lucide-react';
+import { auth } from '@/lib/auth/auth';
+import { LogoutButton } from '@/components/admin/logout-button';
+import { redirect } from 'next/navigation';
 
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
+export default async function AdminLayout({ children }: { children: React.ReactNode }) {
+  const session = await auth();
+
+  if (!session?.user) {
+    redirect('/admin/login');
+  }
   return (
     <div className="flex h-screen bg-gray-50">
       {/* Sidebar */}
@@ -27,8 +35,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </NavLink>
         </nav>
 
-        <div className="p-4 border-t border-gray-200 text-xs text-gray-500">
-          <p>Version 0.1.0</p>
+        <div className="p-4 border-t border-gray-200">
+          <div className="mb-3 text-xs text-gray-600">
+            <p className="font-medium">{session.user?.name}</p>
+            <p className="text-gray-500">{session.user?.email}</p>
+          </div>
+          <LogoutButton />
+          <p className="text-xs text-gray-400 mt-3">Version 0.1.0</p>
         </div>
       </aside>
 

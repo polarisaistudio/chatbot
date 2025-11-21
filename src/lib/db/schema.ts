@@ -77,6 +77,28 @@ export const queryAnalytics = pgTable('query_analytics', {
   metadata: jsonb('metadata').$type<Record<string, any>>().default({}),
 });
 
+// Admin users table - stores admin user credentials
+export const adminUsers = pgTable('admin_users', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  email: varchar('email', { length: 255 }).notNull().unique(),
+  passwordHash: text('password_hash').notNull(),
+  name: varchar('name', { length: 255 }),
+  role: varchar('role', { length: 20 }).notNull().default('admin'),
+  isActive: boolean('is_active').notNull().default(true),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+// Feedback table - stores user feedback for messages
+export const feedback = pgTable('feedback', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  messageId: uuid('message_id').notNull().references(() => messages.id, { onDelete: 'cascade' }),
+  conversationId: uuid('conversation_id').notNull().references(() => conversations.id, { onDelete: 'cascade' }),
+  rating: integer('rating').notNull(), // 1 for thumbs up, -1 for thumbs down
+  comment: text('comment'),
+  timestamp: timestamp('timestamp', { withTimezone: true }).notNull().defaultNow(),
+});
+
 // Relations
 export const documentsRelations = relations(documents, ({ many }) => ({
   chunks: many(documentChunks),
@@ -93,9 +115,21 @@ export const conversationsRelations = relations(conversations, ({ many }) => ({
   messages: many(messages),
 }));
 
-export const messagesRelations = relations(messages, ({ one }) => ({
+export const messagesRelations = relations(messages, ({ one, many }) => ({
   conversation: one(conversations, {
     fields: [messages.conversationId],
+    references: [conversations.id],
+  }),
+  feedback: many(feedback),
+}));
+
+export const feedbackRelations = relations(feedback, ({ one }) => ({
+  message: one(messages, {
+    fields: [feedback.messageId],
+    references: [messages.id],
+  }),
+  conversation: one(conversations, {
+    fields: [feedback.conversationId],
     references: [conversations.id],
   }),
 }));
