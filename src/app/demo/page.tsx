@@ -80,16 +80,16 @@ export default function DemoPage() {
             <CardContent>
               <ul className="space-y-2">
                 <li className="p-3 bg-gray-50 rounded-lg text-sm">
-                  "What are the key features of Polaris AI Support?"
+                  &ldquo;What are the key features of Polaris AI Support?&rdquo;
                 </li>
                 <li className="p-3 bg-gray-50 rounded-lg text-sm">
-                  "How much does the Pro tier cost?"
+                  &ldquo;How much does the Pro tier cost?&rdquo;
                 </li>
                 <li className="p-3 bg-gray-50 rounded-lg text-sm">
-                  "What file formats are supported?"
+                  &ldquo;What file formats are supported?&rdquo;
                 </li>
                 <li className="p-3 bg-gray-50 rounded-lg text-sm">
-                  "这个产品支持哪些语言？" (What languages does this product support?)
+                  &ldquo;这个产品支持哪些语言？&rdquo; (What languages does this product support?)
                 </li>
               </ul>
             </CardContent>
