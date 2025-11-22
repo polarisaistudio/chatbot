@@ -1,18 +1,14 @@
 /**
- * Admin Dashboard Layout (Protected Pages)
+ * Admin Dashboard Layout
  */
 
 import Link from 'next/link';
-import { FileText, MessageSquare, BarChart3, LogOut } from 'lucide-react';
-import { auth } from '@/lib/auth/auth';
-import { redirect } from 'next/navigation';
+import { FileText, MessageSquare, BarChart3 } from 'lucide-react';
+
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const session = await auth();
-
-  if (!session?.user) {
-    redirect('/admin/login');
-  }
 
   return (
     <div className="flex h-screen bg-gray-50">
@@ -36,20 +32,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         </nav>
 
         <div className="p-4 border-t border-gray-200">
-          <div className="mb-3 text-xs text-gray-600">
-            <p className="font-medium">{session.user?.name}</p>
-            <p className="text-gray-500">{session.user?.email}</p>
-          </div>
-          <form action="/api/auth/signout" method="POST">
-            <button
-              type="submit"
-              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-            >
-              <LogOut className="w-4 h-4" />
-              <span>Sign Out</span>
-            </button>
-          </form>
-          <p className="text-xs text-gray-400 mt-3">Version 0.1.0</p>
+          <p className="text-xs text-gray-400">Version 0.1.0</p>
         </div>
       </aside>
 

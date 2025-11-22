@@ -15,6 +15,7 @@ export function LoginForm() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -32,10 +33,11 @@ export function LoginForm() {
       if (result?.error) {
         setError('Invalid email or password');
         setIsLoading(false);
-      } else if (result?.ok) {
-        // Successfully logged in, use router.push for client-side navigation
-        router.push('/admin');
-        router.refresh(); // Refresh to update session
+      } else if (result?.ok && !isRedirecting) {
+        // Successfully logged in, use window.location for full page reload
+        // This prevents the session state mismatch that causes redirect loops
+        setIsRedirecting(true);
+        window.location.href = '/admin';
       }
     } catch (err) {
       console.error('Login error:', err);

@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { SessionProvider } from "@/components/providers/session-provider";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -9,9 +8,6 @@ export const metadata: Metadata = {
   title: "Polaris AI Support - Intelligent Customer Service",
   description: "AI-powered customer support chatbot using RAG technology",
 };
-
-// Force all pages to be dynamic to avoid SSR issues with NextAuth
-export const dynamic = 'force-dynamic';
 
 export default function RootLayout({
   children,
@@ -21,7 +17,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <SessionProvider>{children}</SessionProvider>
+        {children}
       </body>
     </html>
   );
