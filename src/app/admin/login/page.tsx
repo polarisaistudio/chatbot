@@ -5,6 +5,9 @@
 
 import { LoginForm } from '@/components/admin/login-form';
 
+// Force dynamic rendering to ensure NextAuth works correctly
+export const dynamic = 'force-dynamic';
+
 export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">

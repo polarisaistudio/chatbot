@@ -5,16 +5,22 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { signIn } from 'next-auth/react';
 
 export function LoginForm() {
+  const [mounted, setMounted] = useState(false);
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  // Ensure component is mounted before rendering
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,6 +46,19 @@ export function LoginForm() {
       setIsLoading(false);
     }
   };
+
+  // Prevent hydration issues
+  if (!mounted) {
+    return (
+      <div className="space-y-6">
+        <div className="animate-pulse">
+          <div className="h-10 bg-gray-200 rounded mb-4"></div>
+          <div className="h-10 bg-gray-200 rounded mb-4"></div>
+          <div className="h-10 bg-gray-200 rounded"></div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
