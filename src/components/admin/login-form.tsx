@@ -6,6 +6,7 @@
 'use client';
 
 import { useState } from 'react';
+import { signIn } from 'next-auth/react';
 
 export function LoginForm() {
   const [email, setEmail] = useState('');
@@ -19,24 +20,19 @@ export function LoginForm() {
     setIsLoading(true);
 
     try {
-      // Simple form submission to NextAuth
-      const formData = new FormData();
-      formData.append('email', email);
-      formData.append('password', password);
-      formData.append('redirect', 'false');
-      formData.append('callbackUrl', '/admin');
-
-      const response = await fetch('/api/auth/callback/credentials', {
-        method: 'POST',
-        body: formData,
+      const result = await signIn('credentials', {
+        email,
+        password,
+        redirect: false,
+        callbackUrl: '/admin',
       });
 
-      if (response.ok) {
-        // Successfully logged in, redirect to admin
-        window.location.href = '/admin';
-      } else {
+      if (result?.error) {
         setError('Invalid email or password');
         setIsLoading(false);
+      } else if (result?.ok) {
+        // Successfully logged in, redirect
+        window.location.href = '/admin';
       }
     } catch (err) {
       console.error('Login error:', err);
