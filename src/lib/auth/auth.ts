@@ -21,6 +21,8 @@ const loginSchema = z.object({
 export const { auth, signIn, signOut, handlers } = NextAuth({
   ...authConfig,
   secret: process.env.AUTH_SECRET,
+  trustHost: true,
+  debug: true,
   providers: [
     Credentials({
       name: 'credentials',
@@ -29,14 +31,18 @@ export const { auth, signIn, signOut, handlers } = NextAuth({
         password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials) {
+        console.log('[AUTH] Authorize called with credentials:', { email: credentials?.email });
+
         // Validate input
         const validatedFields = loginSchema.safeParse(credentials);
 
         if (!validatedFields.success) {
+          console.log('[AUTH] Validation failed:', validatedFields.error);
           return null;
         }
 
         const { email, password } = validatedFields.data;
+        console.log('[AUTH] Looking up user:', email);
 
         // Find user in database
         const [user] = await db
@@ -46,21 +52,27 @@ export const { auth, signIn, signOut, handlers } = NextAuth({
           .limit(1);
 
         if (!user) {
+          console.log('[AUTH] User not found:', email);
           return null;
         }
 
+        console.log('[AUTH] User found:', { id: user.id, email: user.email, isActive: user.isActive });
+
         // Check if user is active
         if (!user.isActive) {
+          console.log('[AUTH] User is not active');
           return null;
         }
 
         // Verify password
         const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
+        console.log('[AUTH] Password valid:', isPasswordValid);
 
         if (!isPasswordValid) {
           return null;
         }
 
+        console.log('[AUTH] Authentication successful, returning user');
         // Return user object (without password)
         return {
           id: user.id,
