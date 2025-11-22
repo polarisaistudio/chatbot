@@ -5,10 +5,22 @@
 
 import NextAuth from 'next-auth';
 import { authConfig } from '@/lib/auth/auth.config';
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
 
-export default NextAuth(authConfig).auth;
+const authMiddleware = NextAuth(authConfig).auth;
+
+export default async function middleware(request: NextRequest) {
+  // Explicitly allow /admin/login without auth
+  if (request.nextUrl.pathname === '/admin/login') {
+    return NextResponse.next();
+  }
+
+  // Apply auth middleware to all other /admin routes
+  return authMiddleware(request as any);
+}
 
 export const config = {
-  // Protect all admin routes except login
-  matcher: ['/admin/((?!login).*)'],
+  // Match all /admin routes
+  matcher: ['/admin/:path*'],
 };
