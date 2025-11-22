@@ -5,60 +5,45 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { signIn } from 'next-auth/react';
+import { useState } from 'react';
 
 export function LoginForm() {
-  const [mounted, setMounted] = useState(false);
-  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  // Ensure component is mounted before rendering
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError('');
     setIsLoading(true);
 
     try {
-      const result = await signIn('credentials', {
-        email,
-        password,
-        redirect: false,
+      // Simple form submission to NextAuth
+      const formData = new FormData();
+      formData.append('email', email);
+      formData.append('password', password);
+      formData.append('redirect', 'false');
+      formData.append('callbackUrl', '/admin');
+
+      const response = await fetch('/api/auth/callback/credentials', {
+        method: 'POST',
+        body: formData,
       });
 
-      if (result?.error) {
-        setError('Invalid email or password');
+      if (response.ok) {
+        // Successfully logged in, redirect to admin
+        window.location.href = '/admin';
       } else {
-        router.push('/admin');
-        router.refresh();
+        setError('Invalid email or password');
+        setIsLoading(false);
       }
     } catch (err) {
+      console.error('Login error:', err);
       setError('An error occurred. Please try again.');
-    } finally {
       setIsLoading(false);
     }
   };
-
-  // Prevent hydration issues
-  if (!mounted) {
-    return (
-      <div className="space-y-6">
-        <div className="animate-pulse">
-          <div className="h-10 bg-gray-200 rounded mb-4"></div>
-          <div className="h-10 bg-gray-200 rounded mb-4"></div>
-          <div className="h-10 bg-gray-200 rounded"></div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -68,6 +53,7 @@ export function LoginForm() {
         </label>
         <input
           id="email"
+          name="email"
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
@@ -84,6 +70,7 @@ export function LoginForm() {
         </label>
         <input
           id="password"
+          name="password"
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
