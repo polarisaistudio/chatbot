@@ -9,8 +9,8 @@ import { authConfig } from '@/lib/auth/auth.config';
 export default NextAuth(authConfig).auth;
 
 export const config = {
-  // Only match /admin routes, but exclude /admin/login via regex
-  // This matches /admin and /admin/* but NOT /admin/login
+  // Protect all /admin routes except /admin/login
+  // The negative lookahead (?!login) excludes the login page
   matcher: [
     '/admin',
     '/admin/((?!login).*)',

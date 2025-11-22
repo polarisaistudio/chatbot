@@ -7,8 +7,10 @@
 
 import { useState } from 'react';
 import { signIn } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 
 export function LoginForm() {
+  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -31,8 +33,9 @@ export function LoginForm() {
         setError('Invalid email or password');
         setIsLoading(false);
       } else if (result?.ok) {
-        // Successfully logged in, redirect
-        window.location.href = '/admin';
+        // Successfully logged in, use router.push for client-side navigation
+        router.push('/admin');
+        router.refresh(); // Refresh to update session
       }
     } catch (err) {
       console.error('Login error:', err);
