@@ -52,7 +52,12 @@ export default function DocumentsPage() {
 
   async function fetchDocuments() {
     try {
-      const response = await fetch('/api/documents?limit=100');
+      const response = await fetch('/api/documents?limit=100', {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache',
+        },
+      });
       if (!response.ok) throw new Error('Failed to fetch documents');
       const data = await response.json();
       setDocuments(data.documents);
@@ -70,34 +75,58 @@ export default function DocumentsPage() {
     const formData = new FormData(e.currentTarget);
     const file = formData.get('file') as File;
 
-    if (!file) return;
+    if (!file) {
+      setUploading(false);
+      return;
+    }
 
     try {
-      // Read file as data URL
-      const reader = new FileReader();
-      reader.onload = async (event) => {
-        const dataUrl = event.target?.result as string;
+      // Read file as data URL using Promise
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (event) => resolve(event.target?.result as string);
+        reader.onerror = () => reject(new Error('Failed to read file'));
+        reader.readAsDataURL(file);
+      });
 
-        const response = await fetch('/api/documents/upload', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            url: dataUrl,
-            title: file.name,
-            fileType: file.name.split('.').pop()?.toLowerCase() || 'txt',
-          }),
-        });
+      const response = await fetch('/api/documents/upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          url: dataUrl,
+          title: file.name,
+          fileType: file.name.split('.').pop()?.toLowerCase() || 'txt',
+        }),
+      });
 
-        if (!response.ok) {
-          const error = await response.text();
-          throw new Error(error);
-        }
+      if (!response.ok) {
+        const error = await response.text();
+        throw new Error(error);
+      }
 
-        setUploadDialogOpen(false);
-        fetchDocuments();
+      // Get the document ID from response
+      const data = await response.json();
+
+      // Add optimistic entry immediately
+      const newDoc: Document = {
+        id: data.documentId,
+        title: file.name,
+        fileName: file.name,
+        fileType: file.name.split('.').pop()?.toLowerCase() || 'txt',
+        fileSize: file.size,
+        status: 'processing',
+        totalChunks: null,
+        uploadDate: new Date().toISOString(),
+        errorMessage: null,
       };
 
-      reader.readAsDataURL(file);
+      setDocuments(prev => [newDoc, ...prev]);
+      setUploadDialogOpen(false);
+
+      // Refresh after 5 seconds to get updated status
+      setTimeout(() => {
+        fetchDocuments();
+      }, 5000);
     } catch (error) {
       console.error('Error uploading file:', error);
       alert('Failed to upload file');
@@ -109,17 +138,28 @@ export default function DocumentsPage() {
   async function handleDelete(id: string) {
     if (!confirm('Are you sure you want to delete this document?')) return;
 
+    // Optimistic update - remove from UI immediately
+    const previousDocuments = documents;
+    setDocuments(documents.filter(doc => doc.id !== id));
+
     try {
       const response = await fetch(`/api/documents/${id}`, {
         method: 'DELETE',
       });
 
-      if (!response.ok) throw new Error('Failed to delete document');
+      if (!response.ok) {
+        // Revert on error
+        setDocuments(previousDocuments);
+        throw new Error('Failed to delete document');
+      }
 
+      // Refresh to ensure consistency
       fetchDocuments();
     } catch (error) {
       console.error('Error deleting document:', error);
       alert('Failed to delete document');
+      // Revert on error
+      setDocuments(previousDocuments);
     }
   }
 

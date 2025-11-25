@@ -79,6 +79,10 @@ export async function GET(request: NextRequest) {
       total: count,
       limit,
       offset,
+    }, {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate',
+      },
     });
   } catch (error) {
     const errorData = handleError(error);
