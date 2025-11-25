@@ -9,6 +9,10 @@ import {
   buildChatMessages,
   detectLanguage,
   getFallbackResponse,
+  isGreeting,
+  getGreetingResponse,
+  isHelpQuery,
+  getHelpResponse,
   type ConversationMessage,
 } from '@/lib/prompts/templates';
 import { logger } from '@/lib/utils/logger';
@@ -48,6 +52,46 @@ export class RAGQueryEngine {
       logger.debug(`Detected language: ${language}`, {
         context: 'RAGQueryEngine',
       });
+
+      // Step 1.5: Check if it's a greeting (handle early to avoid unnecessary embedding/search)
+      if (isGreeting(question)) {
+        logger.info('Detected greeting, responding with greeting', {
+          context: 'RAGQueryEngine',
+        });
+        const totalTime = Date.now() - startTime;
+        return {
+          answer: getGreetingResponse(language),
+          sources: [],
+          metadata: {
+            queryEmbeddingTime: 0,
+            searchTime: 0,
+            llmTime: 0,
+            totalTime,
+            chunksRetrieved: 0,
+            language,
+          },
+        };
+      }
+
+      // Step 1.6: Check if it's a help/capabilities query
+      if (isHelpQuery(question)) {
+        logger.info('Detected help query, responding with capabilities', {
+          context: 'RAGQueryEngine',
+        });
+        const totalTime = Date.now() - startTime;
+        return {
+          answer: getHelpResponse(language),
+          sources: [],
+          metadata: {
+            queryEmbeddingTime: 0,
+            searchTime: 0,
+            llmTime: 0,
+            totalTime,
+            chunksRetrieved: 0,
+            language,
+          },
+        };
+      }
 
       // Step 2: Generate query embedding
       const embeddingStart = Date.now();

@@ -13,7 +13,7 @@ export const EMBEDDING_DIMENSIONS = 384;
 
 // RAG configuration
 export const TOP_K_CHUNKS = 5; // Number of chunks to retrieve
-export const MIN_SIMILARITY_SCORE = 0.5;
+export const MIN_SIMILARITY_SCORE = 0.3; // Lowered to capture more results for short queries
 
 // LLM configuration
 export const GROQ_MODEL = 'llama-3.3-70b-versatile';

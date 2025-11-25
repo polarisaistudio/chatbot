@@ -98,14 +98,83 @@ export function buildChatMessages(context: PromptContext) {
 }
 
 /**
+ * Check if the message is a greeting
+ */
+export function isGreeting(text: string): boolean {
+  const greetings = [
+    'hi', 'hello', 'hey', 'greetings', 'good morning', 'good afternoon',
+    'good evening', 'howdy', "what's up", 'sup', 'yo',
+    '你好', '嗨', '哈喽', '早上好', '下午好', '晚上好'
+  ];
+  const normalizedText = text.toLowerCase().trim();
+  return greetings.some(g => normalizedText === g || normalizedText.startsWith(g + ' ') || normalizedText.startsWith(g + '!') || normalizedText.startsWith(g + ','));
+}
+
+/**
+ * Get greeting response
+ */
+export function getGreetingResponse(language: 'en' | 'zh' = 'en'): string {
+  if (language === 'zh') {
+    return '您好！我是Polaris AI Studio的智能客服助手。请问有什么可以帮您的？';
+  }
+  return "Hello! I'm the Polaris AI Studio support assistant. How can I help you today?";
+}
+
+/**
+ * Check if the message is asking for help/capabilities
+ */
+export function isHelpQuery(text: string): boolean {
+  const helpPatterns = [
+    'how can you help',
+    'what can you do',
+    'what do you do',
+    'what are you',
+    'who are you',
+    'help me',
+    'what services',
+    'what can you help',
+    '你能帮我什么',
+    '你能做什么',
+    '你是谁',
+    '你是什么'
+  ];
+  const normalizedText = text.toLowerCase().trim();
+  return helpPatterns.some(p => normalizedText.includes(p));
+}
+
+/**
+ * Get help/capabilities response
+ */
+export function getHelpResponse(language: 'en' | 'zh' = 'en'): string {
+  if (language === 'zh') {
+    return `我是Polaris AI Studio的智能客服助手，可以帮助您了解：
+
+• **AI自动化服务** - 了解我们如何帮助小型企业节省时间和成本
+• **案例研究** - 查看我们帮助过的沙龙、诊所、房产中介、餐厅和电商店铺的成功案例
+• **定价方案** - 获取适合您业务的定价信息
+• **联系方式** - 预约免费30分钟咨询
+
+请随时告诉我您想了解什么！`;
+  }
+  return `I'm the Polaris AI Studio support assistant. I can help you with:
+
+• **AI Automation Services** - Learn how we help small businesses save time and money
+• **Case Studies** - See success stories from salons, clinics, real estate agents, restaurants, and e-commerce stores
+• **Pricing** - Get pricing information that fits your business
+• **Contact** - Book a free 30-minute consultation
+
+Feel free to ask me about any of these topics!`;
+}
+
+/**
  * Fallback response when no context is found
  */
 export function getFallbackResponse(language: 'en' | 'zh' = 'en'): string {
   if (language === 'zh') {
-    return '抱歉，我在知识库中没有找到相关信息来回答您的问题。您能否提供更多详细信息，或者尝试用不同的方式提问？';
+    return '我目前没有这方面的信息。如果您想进一步了解，欢迎预约免费咨询：https://calendly.com/polarisaistudio/introduction-call';
   }
 
-  return "I apologize, but I couldn't find relevant information in the knowledge base to answer your question. Could you provide more details or try rephrasing your question?";
+  return "I don't have information on that topic. If you'd like to learn more, feel free to book a free consultation: https://calendly.com/polarisaistudio/introduction-call";
 }
 
 /**

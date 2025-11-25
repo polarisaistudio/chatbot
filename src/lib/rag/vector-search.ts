@@ -4,7 +4,7 @@
 
 import { db } from '@/lib/db';
 import { documentChunks, documents } from '@/lib/db/schema';
-import { sql, eq, desc } from 'drizzle-orm';
+import { sql, eq } from 'drizzle-orm';
 import { TOP_K_CHUNKS, MIN_SIMILARITY_SCORE } from '@/lib/constants';
 import { logger } from '@/lib/utils/logger';
 
@@ -42,23 +42,29 @@ export class VectorSearch {
         },
       });
 
-      // Perform cosine similarity search using pgvector
-      // Note: We use 1 - (embedding <=> query) to get similarity (higher is better)
-      const results = await db
-        .select({
-          chunkId: documentChunks.id,
-          documentId: documentChunks.documentId,
-          documentTitle: documents.title,
-          chunkText: documentChunks.chunkText,
-          chunkIndex: documentChunks.chunkIndex,
-          similarity: sql<number>`1 - (${documentChunks.embedding} <=> ${embeddingStr}::vector)`,
-          metadata: documentChunks.metadata,
-        })
-        .from(documentChunks)
-        .innerJoin(documents, eq(documentChunks.documentId, documents.id))
-        .where(eq(documents.status, 'completed'))
-        .orderBy(sql`${documentChunks.embedding} <=> ${embeddingStr}::vector`)
-        .limit(limit);
+      // Using raw SQL for vector similarity search
+      // Note: Using subquery approach because ORDER BY embedding <=> vector
+      // has issues with Neon HTTP driver for certain embeddings
+      const rawQuery = sql`
+        SELECT * FROM (
+          SELECT
+            dc.id as "chunkId",
+            dc.document_id as "documentId",
+            d.title as "documentTitle",
+            dc.chunk_text as "chunkText",
+            dc.chunk_index as "chunkIndex",
+            1 - (dc.embedding <=> ${embeddingStr}::vector) as similarity,
+            dc.metadata
+          FROM document_chunks dc
+          INNER JOIN documents d ON dc.document_id = d.id
+          WHERE d.status = 'completed'
+        ) sub
+        ORDER BY similarity DESC
+        LIMIT ${limit}
+      `;
+
+      const rawResults = await db.execute(rawQuery);
+      const results = rawResults.rows as any[];
 
       // Filter by minimum similarity
       const filteredResults = results.filter(
