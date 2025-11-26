@@ -9,7 +9,7 @@ import { logger } from '@/lib/utils/logger';
 
 // Configure transformers.js
 env.allowLocalModels = false;
-env.useBrowserCache = false;
+env.useBrowserCache = true; // Allow caching in Vercel /tmp for faster cold starts
 
 export class EmbeddingGenerator {
   private static instance: EmbeddingGenerator;

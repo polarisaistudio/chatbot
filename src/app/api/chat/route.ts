@@ -15,6 +15,7 @@ import { eq } from 'drizzle-orm';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+export const maxDuration = 60; // 1 minute for chat (handles cold start + LLM response)
 
 /**
  * POST /api/chat - Send a message and get AI response
