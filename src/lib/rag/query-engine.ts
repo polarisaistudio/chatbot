@@ -8,13 +8,13 @@ import { groqClient } from '@/lib/llm/groq-client';
 import {
   buildChatMessages,
   detectLanguage,
-  getFallbackResponse,
   isGreeting,
   getGreetingResponse,
   isHelpQuery,
   getHelpResponse,
   type ConversationMessage,
 } from '@/lib/prompts/templates';
+import { matchFAQ, getDefaultResponse } from './faq-matcher';
 import { logger } from '@/lib/utils/logger';
 import type { SearchResult } from './vector-search';
 
@@ -93,6 +93,28 @@ export class RAGQueryEngine {
         };
       }
 
+      // Step 1.7: Check FAQ database for common questions (fast, no embedding needed)
+      const faqMatch = matchFAQ(question);
+      if (faqMatch) {
+        logger.info('FAQ match found', {
+          context: 'RAGQueryEngine',
+          metadata: { category: faqMatch.category, confidence: faqMatch.confidence },
+        });
+        const totalTime = Date.now() - startTime;
+        return {
+          answer: language === 'zh' ? faqMatch.answerZh : faqMatch.answer,
+          sources: [],
+          metadata: {
+            queryEmbeddingTime: 0,
+            searchTime: 0,
+            llmTime: 0,
+            totalTime,
+            chunksRetrieved: 0,
+            language,
+          },
+        };
+      }
+
       // Step 2: Generate query embedding
       const embeddingStart = Date.now();
       const queryEmbedding = await embeddingGenerator.generateEmbedding(question);
@@ -129,8 +151,8 @@ export class RAGQueryEngine {
       const llmStart = Date.now();
 
       if (searchResults.length === 0) {
-        // No relevant context found
-        answer = getFallbackResponse(language);
+        // No relevant context found - use default response with CTA
+        answer = getDefaultResponse(language);
         logger.warn('No relevant context found for query', {
           context: 'RAGQueryEngine',
         });
@@ -200,6 +222,32 @@ export class RAGQueryEngine {
       // Detect language
       const language = detectLanguage(question);
 
+      // Check for greeting (skip embedding/search)
+      if (isGreeting(question)) {
+        yield { type: 'metadata', data: { sources: [], chunksRetrieved: 0, embeddingTime: 0, searchTime: 0 } };
+        yield { type: 'chunk', content: getGreetingResponse(language) };
+        return;
+      }
+
+      // Check for help query (skip embedding/search)
+      if (isHelpQuery(question)) {
+        yield { type: 'metadata', data: { sources: [], chunksRetrieved: 0, embeddingTime: 0, searchTime: 0 } };
+        yield { type: 'chunk', content: getHelpResponse(language) };
+        return;
+      }
+
+      // Check FAQ database (skip embedding/search)
+      const faqMatch = matchFAQ(question);
+      if (faqMatch) {
+        logger.info('FAQ match found (streaming)', {
+          context: 'RAGQueryEngine',
+          metadata: { category: faqMatch.category, confidence: faqMatch.confidence },
+        });
+        yield { type: 'metadata', data: { sources: [], chunksRetrieved: 0, embeddingTime: 0, searchTime: 0 } };
+        yield { type: 'chunk', content: language === 'zh' ? faqMatch.answerZh : faqMatch.answer };
+        return;
+      }
+
       // Generate embedding
       const embeddingStart = Date.now();
       const queryEmbedding = await embeddingGenerator.generateEmbedding(question);
@@ -225,7 +273,7 @@ export class RAGQueryEngine {
       if (searchResults.length === 0) {
         yield {
           type: 'chunk',
-          content: getFallbackResponse(language),
+          content: getDefaultResponse(language),
         };
       } else {
         const messages = buildChatMessages({

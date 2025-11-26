@@ -25,10 +25,7 @@ export function buildContext(chunks: SearchResult[]): string {
   }
 
   return chunks
-    .map((chunk, index) => {
-      return `[Document ${index + 1}: ${chunk.documentTitle}]
-${chunk.chunkText}`;
-    })
+    .map((chunk) => chunk.chunkText)
     .join('\n\n---\n\n');
 }
 
@@ -43,7 +40,7 @@ Guidelines:
 - Be concise but thorough in your responses
 - Maintain a professional and friendly tone
 - If the user asks in Chinese, respond in Chinese. If in English, respond in English.
-- Always cite which document the information comes from when possible
+- Do NOT mention or cite document names or sources in your response
 - Consider the conversation history to provide contextual and relevant responses
 - If the user refers to previous messages (e.g., "what did you just say", "tell me more about that"), use the conversation history to understand the context
 
