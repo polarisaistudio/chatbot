@@ -17,6 +17,24 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60; // 1 minute for chat (handles cold start + LLM response)
 
+// CORS headers for cross-origin requests
+const corsHeaders = {
+  'Access-Control-Allow-Origin': 'https://polarisaistudio.com',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+};
+
+/**
+ * OPTIONS /api/chat - Handle preflight requests
+ */
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 204,
+    headers: corsHeaders,
+  });
+}
+
+
 /**
  * POST /api/chat - Send a message and get AI response
  */
@@ -162,6 +180,7 @@ export async function POST(request: NextRequest) {
           'Content-Type': 'text/event-stream',
           'Cache-Control': 'no-cache',
           Connection: 'keep-alive',
+          ...corsHeaders,
         },
       });
     } else {
@@ -203,20 +222,23 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      return NextResponse.json({
-        response: result.answer,
-        sessionId,
-        sources: result.sources.map((s) => ({
-          documentId: s.documentId,
-          documentTitle: s.documentTitle,
-          chunkText: s.chunkText.substring(0, 200),
-          similarity: s.similarity,
-        })),
-        metadata: {
-          responseTime,
-          ...result.metadata,
+      return NextResponse.json(
+        {
+          response: result.answer,
+          sessionId,
+          sources: result.sources.map((s) => ({
+            documentId: s.documentId,
+            documentTitle: s.documentTitle,
+            chunkText: s.chunkText.substring(0, 200),
+            similarity: s.similarity,
+          })),
+          metadata: {
+            responseTime,
+            ...result.metadata,
+          },
         },
-      });
+        { headers: corsHeaders }
+      );
     }
   } catch (error) {
     const errorData = handleError(error);
@@ -227,7 +249,7 @@ export async function POST(request: NextRequest) {
         error: errorData.message,
         code: errorData.code,
       },
-      { status: errorData.statusCode }
+      { status: errorData.statusCode, headers: corsHeaders }
     );
   }
 }
